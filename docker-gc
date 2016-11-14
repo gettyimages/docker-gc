@@ -57,6 +57,7 @@ DRY_RUN=${DRY_RUN:=0}
 EXCLUDE_DEAD=${EXCLUDE_DEAD:=0}
 REMOVE_VOLUMES=${REMOVE_VOLUMES:=0}
 EXCLUDE_VOLUMES_IDS_FILE=${EXCLUDE_VOLUMES_IDS_FILE:=/etc/docker-gc-exclude-volumes}
+EXCLUDE_BY_LABEL=${EXCLUDE_BY_LABEL:=''}
 
 for pid in $(pidof -s docker-gc); do
     if [[ $pid != $$ ]]; then
@@ -224,7 +225,7 @@ comm -23 containers.all containers.running > containers.exited
 if [[ $EXCLUDE_DEAD -gt 0 ]]; then
     echo "Excluding dead containers"
     # List dead containers
-    $DOCKER ps -q -a -f status=dead | sort | uniq > containers.dead    
+    $DOCKER ps -q -a -f status=dead | sort | uniq > containers.dead
     comm -23 containers.exited containers.dead > containers.exited.tmp
     cat containers.exited.tmp > containers.exited
 fi
@@ -283,6 +284,15 @@ if [[ $REMOVE_ASSOCIATED_VOLUME -gt 0 ]]; then
         FORCE_CONTAINER_FLAG=$FORCE_CONTAINER_FLAG"v"
     fi
 fi
+
+# Exclude containers by label
+if [[ ! -z "${EXCLUDE_BY_LABEL// }" ]]; then
+    $DOCKER ps -q -a --no-trunc --filter "label=${EXCLUDE_BY_LABEL}" | sort | uniq > containers.excluded
+    container_log "The following container was excluded from removal by label '${EXCLUDE_BY_LABEL}'" containers.excluded
+    cat containers.reap | grep -v -f containers.excluded > containers.reap.tmp
+    mv -f containers.reap.tmp containers.reap
+fi
+
 # Reap containers.
 if [[ $DRY_RUN -gt 0 ]]; then
     container_log "The following container would have been removed" containers.reap
@@ -295,6 +305,14 @@ fi
 FORCE_IMAGE_FLAG=""
 if [[ $FORCE_IMAGE_REMOVAL -gt 0 ]]; then
     FORCE_IMAGE_FLAG="-f"
+fi
+
+# Exclude images by label
+if [[ ! -z "${EXCLUDE_BY_LABEL// }" ]]; then
+    $DOCKER images -q --no-trunc --filter "label=${EXCLUDE_BY_LABEL}" | sort | uniq > images.excluded
+    image_log "The following image was excluded from removal by label '${EXCLUDE_BY_LABEL}'" images.excluded
+    cat images.reap | grep -v -f images.excluded > images.reap.tmp
+    mv -f images.reap.tmp images.reap
 fi
 
 # Reap images.
