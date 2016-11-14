@@ -4,6 +4,7 @@
 > _This fork of `spotify/docker-gc` merges the following pull requests_:
 > - Volume cleanup https://github.com/spotify/docker-gc/pull/142
 > - Exclude by label https://github.com/spotify/docker-gc/pull/123
+>
 ---
 
 * [Building](#building)
