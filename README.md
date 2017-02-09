@@ -6,7 +6,8 @@
 >   - additionally, added the REMOVE_EXTERNAL_VOLUMES parameter to allow removal of local volumes only
 > - Exclude by label https://github.com/spotify/docker-gc/pull/123
 >
-> It also supports back to docker 1.11
+> _It also supports docker daemons back to version 1.11_
+>
 ---
 
 * [Building](#building)
