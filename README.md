@@ -3,8 +3,10 @@
 ---
 > _This fork of `spotify/docker-gc` merges the following pull requests_:
 > - Volume cleanup https://github.com/spotify/docker-gc/pull/142
+>   - additionally, added the REMOVE_EXTERNAL_VOLUMES parameter to allow removal of local volumes only
 > - Exclude by label https://github.com/spotify/docker-gc/pull/123
 >
+> It also supports back to docker 1.11
 ---
 
 * [Building](#building)
