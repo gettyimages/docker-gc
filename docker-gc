@@ -344,7 +344,7 @@ if [[ $REMOVE_VOLUMES -gt 0 ]]; then
     else
         for vol in $($DOCKER volume ls --filter "dangling=true" -q | grep -v -f $EXCLUDE_VOLUMES_IDS_FILE); do
             # pass individual volumes to inspect, as the "driver=X" filter is only valid in docker 1.12+
-            driver="$(docker volume inspect -f '{{.Driver}}' $vol)"
+            driver="$($DOCKER volume inspect -f '{{.Driver}}' $vol)"
             if [[ $REMOVE_EXTERNAL_VOLUMES -gt 0 ]] || [[ "local" == "$driver" ]]; then
                 echo "$vol [driver: $driver]" >> volumes.reap
             fi
@@ -354,7 +354,7 @@ if [[ $REMOVE_VOLUMES -gt 0 ]]; then
             volumes_log "The following volume would have been removed" volumes.reap
         else
             volumes_log "Removing volume" volumes.reap
-            xargs -n 1 $DOCKER volume rm < <(awk '{print $1}' < volumes.reap ) &>/dev/null || true
+            xargs -n 1 $DOCKER volume rm <<< $(cat volumes.reap | awk '{print $1}') &>/dev/null || true
         fi
     fi
 fi
