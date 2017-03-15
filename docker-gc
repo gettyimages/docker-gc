@@ -290,8 +290,9 @@ fi
 if [[ ! -z "${EXCLUDE_BY_LABEL// }" ]]; then
     $DOCKER ps -q -a --no-trunc --filter "label=${EXCLUDE_BY_LABEL}" | sort | uniq > containers.excluded
     container_log "The following container was excluded from removal by label '${EXCLUDE_BY_LABEL}'" containers.excluded
-    cat containers.reap | grep -v -f containers.excluded > containers.reap.tmp
-    mv -f containers.reap.tmp containers.reap
+    if cat containers.reap | grep -v -f containers.excluded > containers.reap.tmp; then
+        mv -f containers.reap.tmp containers.reap
+    fi
 fi
 
 # Reap containers.
@@ -312,8 +313,9 @@ fi
 if [[ ! -z "${EXCLUDE_BY_LABEL// }" ]]; then
     $DOCKER images -q --no-trunc --filter "label=${EXCLUDE_BY_LABEL}" | sort | uniq > images.excluded
     image_log "The following image was excluded from removal by label '${EXCLUDE_BY_LABEL}'" images.excluded
-    cat images.reap | grep -v -f images.excluded > images.reap.tmp
-    mv -f images.reap.tmp images.reap
+    if cat images.reap | grep -v -f images.excluded > images.reap.tmp; then
+        mv -f images.reap.tmp images.reap
+    fi
 fi
 
 # Reap images.
@@ -344,10 +346,12 @@ if [[ $REMOVE_VOLUMES -gt 0 ]]; then
     else
         for vol in $($DOCKER volume ls --filter "dangling=true" -q | grep -v -f $EXCLUDE_VOLUMES_IDS_FILE); do
             # pass individual volumes to inspect, as the "driver=X" filter is only valid in docker 1.12+
+            set +u
             driver="$($DOCKER volume inspect -f '{{.Driver}}' $vol)"
             if [[ $REMOVE_EXTERNAL_VOLUMES -gt 0 ]] || [[ "local" == "$driver" ]]; then
                 echo "$vol [driver: $driver]" >> volumes.reap
             fi
+            set -u
         done
 
         if [[ $DRY_RUN -gt 0 ]]; then
